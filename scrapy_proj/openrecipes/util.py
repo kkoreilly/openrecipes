@@ -1,20 +1,20 @@
 import isodate
 import timelib
-from scrapy import log
+import logging
 import bleach
 import re
 
 
 def parse_iso_date(scope):
     try:
-        return scope.select('@content | @datetime').extract()[0]
+        return scope.select("@content | @datetime").extract()[0]
     except:
-        return ''
+        return ""
 
 
 def flatten(list_or_string):
     if not list_or_string:
-        return ''
+        return ""
     if isinstance(list_or_string, list):
         return list_or_string[0]
     else:
@@ -23,8 +23,7 @@ def flatten(list_or_string):
 
 def strip_html(html_str):
     """removes all HTML markup using the Bleach lib"""
-    return bleach.clean(html_str, tags=[], attributes={},
-                                   styles=[], strip=True)
+    return bleach.clean(html_str, tags={}, attributes={}, strip=True)
 
 
 def trim_whitespace(str):
@@ -39,16 +38,16 @@ def get_isodate(date_str):
     if not date_str:
         return None
 
-    #first, is it already a valid isodate?
+    # first, is it already a valid isodate?
     try:
         isodate.parse_date(date_str)
         return date_str
-    except isodate.ISO8601Error, e:
+    except (isodate.ISO8601Error, e):
         # if not, try to parse it
         try:
             iso_date = isodate.date_isoformat(timelib.strtodatetime(date_str))
-        except Exception, e:
-            log.msg(e.message, level=log.WARNING)
+        except (Exception, e):
+            logging.msg(e.message, level=logging.WARNING)
             return None
 
         return iso_date
@@ -61,17 +60,17 @@ def get_isoduration(date_str):
     if not date_str:
         return None
 
-    #first, is it already a valid isoduration?
+    # first, is it already a valid isoduration?
     try:
         isodate.parse_duration(date_str)
         return date_str
-    except isodate.ISO8601Error, e:
+    except (isodate.ISO8601Error, e):
         # if not, try to parse it
         try:
-            delta = (timelib.strtodatetime(date_str) - timelib.strtodatetime('now'))
+            delta = timelib.strtodatetime(date_str) - timelib.strtodatetime("now")
             iso_duration = isodate.duration_isoformat(delta)
-        except Exception, e:
-            log.msg(e.message, level=log.WARNING)
+        except (Exception, e):
+            logging.msg(e.message, level=logging.WARNING)
             return None
 
         return iso_duration
@@ -83,8 +82,8 @@ def parse_isodate(iso_date):
 
     try:
         date = isodate.parse_date(iso_date)
-    except Exception, e:
-        log.msg(e.message, level=log.WARNING)
+    except (Exception, e):
+        logging.msg(e.message, level=logging.WARNING)
 
     return date
 
@@ -95,16 +94,19 @@ def parse_isoduration(iso_duration):
 
     try:
         delta = isodate.parse_duration(iso_duration)
-    except Exception, e:
-        log.msg(e.message, level=log.WARNING)
+    except (Exception, e):
+        logging.msg(e.message, level=logging.WARNING)
 
     return delta
 
 
 def ingredient_heuristic(container):
-    ordinal_regex = re.compile(r'^\d(st|nd|rd|th)')
-    ingredient_regexp = re.compile(r'^(\d+[^\.]|salt|garlic|pine|parmesan|pepper|few|handful|pinch|some|dash)', re.IGNORECASE)
-    text_nodes = container.select('text()')
+    ordinal_regex = re.compile(r"^\d(st|nd|rd|th)")
+    ingredient_regexp = re.compile(
+        r"^(\d+[^\.]|salt|garlic|pine|parmesan|pepper|few|handful|pinch|some|dash)",
+        re.IGNORECASE,
+    )
+    text_nodes = container.select("text()")
     if len(text_nodes) == 0:
         return 0
     numbercount = 0
@@ -118,7 +120,7 @@ def ingredient_heuristic(container):
 
 # made up number that governs how many ingredient-seeming things need to be in a
 # word container before we decide that it's a list of ingredients
-RECIPE_THRESHOLD = float(2)/3
+RECIPE_THRESHOLD = float(2) / 3
 
 
 def is_ingredient_container(container):
@@ -126,5 +128,8 @@ def is_ingredient_container(container):
 
 
 def select_class(scope, css_class):
-    path = "descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), ' %s ')]" % css_class
+    path = (
+        "descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), ' %s ')]"
+        % css_class
+    )
     return scope.select(path)

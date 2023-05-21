@@ -1,6 +1,6 @@
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 from openrecipes.util import strip_html
 
@@ -8,13 +8,13 @@ from openrecipes.util import strip_html
 class BBCgoodfoodMixin(object):
     # this is the source string we'll store in the DB to aggregate stuff
     # from a single source
-    source = 'bbcgoodfood'
+    source = "bbcgoodfood"
 
     def remove_whitespace(self, input):
         return " ".join("".join(input).split()).strip()
 
     def parse_item(self, response):
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         base_path = """//div[@class='hrecipe']"""
 
@@ -36,43 +36,47 @@ class BBCgoodfoodMixin(object):
         for r_scope in recipes_scopes:
             il = RecipeItemLoader(item=RecipeItem())
 
-            il.add_value('source', self.source)
+            il.add_value("source", self.source)
 
-            il.add_value('name', "".join(r_scope.select(name_path).extract()))
-            il.add_value('url', response.url)
+            il.add_value("name", "".join(r_scope.select(name_path).extract()))
+            il.add_value("url", response.url)
 
             # construct base url for image by removing recipe title from url
-            base_img_url = '/'.join(response.url.split('/')[:-1])
+            base_img_url = "/".join(response.url.split("/")[:-1])
             img_name = "".join(r_scope.select(image_path).extract()).strip()
             if img_name:
-                il.add_value('image', '/'.join([base_img_url, img_name]))
+                il.add_value("image", "/".join([base_img_url, img_name]))
 
-            il.add_value('description', r_scope.select(description_path).extract())
+            il.add_value("description", r_scope.select(description_path).extract())
 
             # remove extra tabs and newlines from Prep Time and Cook Time
             prepSentence = " ".join(r_scope.select(prepTime_path).extract()).strip()
             if prepSentence:
                 prepSentence = self.remove_whitespace(prepSentence)
                 # also remove preceding 'Prep '
-                il.add_value('prepTime', prepSentence.split(' ', 1)[1])
+                il.add_value("prepTime", prepSentence.split(" ", 1)[1])
 
             cookSentence = " ".join(r_scope.select(cookTime_path).extract()).strip()
             if cookSentence:
                 cookSentence = self.remove_whitespace(cookSentence)
-                il.add_value('cookTime', cookSentence.split(' ', 1)[1])
+                il.add_value("cookTime", cookSentence.split(" ", 1)[1])
 
             # the number of servings is a bit tricky
             # if there's a span with class 'yield' it contains the number of servings
             # otherwise number of servings is given in the <p> element
             if r_scope.select(recipeYieldAmount_path).extract():
-                yieldAmount = r_scope.select(recipeYieldAmount_path).extract()[0].strip()
+                yieldAmount = (
+                    r_scope.select(recipeYieldAmount_path).extract()[0].strip()
+                )
             else:
                 yieldAmount = ""
 
             yieldList = r_scope.select(recipeYield_path).extract()
             if yieldList:
                 yieldString = yieldList[0].strip()
-                il.add_value('recipeYield', ('%s %s' % (yieldString, yieldAmount)).strip())
+                il.add_value(
+                    "recipeYield", ("%s %s" % (yieldString, yieldAmount)).strip()
+                )
 
             ingredient_scopes = r_scope.select(ingredients_path)
             ingredients = []
@@ -82,7 +86,7 @@ class BBCgoodfoodMixin(object):
                 # clean extra tabs and newlines
                 ingredient = self.remove_whitespace(ingredient)
                 ingredients.append(ingredient)
-            il.add_value('ingredients', ingredients)
+            il.add_value("ingredients", ingredients)
 
             recipes.append(il.load_item())
 
@@ -97,9 +101,10 @@ class BBCgoodfoodcrawlSpider(CrawlSpider, BBCgoodfoodMixin):
     ]
 
     rules = (
-        Rule(SgmlLinkExtractor(allow=('/searchAZ.do\?pager\.offset=\d+'))),
-        Rule(SgmlLinkExtractor(allow=('/searchAZ.do\?letter=[a-zA-Z]+'))),
-        Rule(SgmlLinkExtractor(allow=('/recipes/\d+/.+/?'),
-                 deny='/recipes/\d+/.+/?\?.+'),
-             callback='parse_item'),
+        Rule(LinkExtractor(allow=("/searchAZ.do\?pager\.offset=\d+"))),
+        Rule(LinkExtractor(allow=("/searchAZ.do\?letter=[a-zA-Z]+"))),
+        Rule(
+            LinkExtractor(allow=("/recipes/\d+/.+/?"), deny="/recipes/\d+/.+/?\?.+"),
+            callback="parse_item",
+        ),
     )

@@ -1,6 +1,6 @@
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 
 
@@ -10,10 +10,10 @@ class PickypalateMixin(object):
     Using this as a mixin lets us reuse the parse_item method more easily
     """
 
-    source = 'pickypalate'
+    source = "pickypalate"
 
     def parse_item(self, response):
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         # site has many recipes missing the semantmic markup, but not worth
         # pursuing those IMHO. use hrecipe
@@ -35,13 +35,13 @@ class PickypalateMixin(object):
         for r_scope in recipes_scopes:
             il = RecipeItemLoader(item=RecipeItem())
 
-            il.add_value('source', self.source)
+            il.add_value("source", self.source)
 
-            il.add_value('name', r_scope.select(name_path).extract())
-            il.add_value('image', r_scope.select(image_path).extract())
-            il.add_value('url', r_scope.select(url_path).extract())
+            il.add_value("name", r_scope.select(name_path).extract())
+            il.add_value("image", r_scope.select(image_path).extract())
+            il.add_value("url", r_scope.select(url_path).extract())
 
-            il.add_value('recipeYield', r_scope.select(recipeYield_path).extract())
+            il.add_value("recipeYield", r_scope.select(recipeYield_path).extract())
 
             ingredient_scopes = r_scope.select(ingredients_path)
             ingredients = []
@@ -51,9 +51,9 @@ class PickypalateMixin(object):
                 amount = "".join(amount).strip()
                 name = "".join(name).strip()
                 ingredients.append("%s %s" % (amount, name))
-            il.add_value('ingredients', ingredients)
+            il.add_value("ingredients", ingredients)
 
-            il.add_value('datePublished', r_scope.select(datePublished_path).extract())
+            il.add_value("datePublished", r_scope.select(datePublished_path).extract())
 
             recipes.append(il.load_item())
 
@@ -69,8 +69,9 @@ class PickypalateSpider(CrawlSpider, PickypalateMixin):
     ]
 
     rules = (
-        Rule(SgmlLinkExtractor(allow=('/category/\d+/'))),
-
-        Rule(SgmlLinkExtractor(allow=('\/\d\d\d\d\/\d\d\/\d\d\/[a-zA-Z_]+/?')),
-             callback='parse_item'),
+        Rule(LinkExtractor(allow=("/category/\d+/"))),
+        Rule(
+            LinkExtractor(allow=("\/\d\d\d\d\/\d\d\/\d\d\/[a-zA-Z_]+/?")),
+            callback="parse_item",
+        ),
     )

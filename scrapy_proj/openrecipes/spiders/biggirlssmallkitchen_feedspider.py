@@ -1,16 +1,17 @@
-from scrapy.spider import BaseSpider
+from scrapy.spiders import Spider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
+from scrapy.selector import Selector
 from openrecipes.spiders.biggirlssmallkitchen_spider import BiggirlssmallkitchenMixin
 
 
-class BiggirlssmallkitchenfeedSpider(BaseSpider, BiggirlssmallkitchenMixin):
+class BiggirlssmallkitchenfeedSpider(Spider, BiggirlssmallkitchenMixin):
     """
     This parses the RSS feed for biggirlssmallkitchen.com, grabs the original
     links to each entry, and scrapes just those pages. This should be used
     to keep up to date after we have backfilled the existing recipes by
     crawling the whole site
     """
+
     name = "biggirlssmallkitchen.feed"
     allowed_domains = [
         "biggirlssmallkitchen.com",
@@ -28,7 +29,7 @@ class BiggirlssmallkitchenfeedSpider(BaseSpider, BiggirlssmallkitchenMixin):
         would have to decode all the encoded characters and then build a DOM
         from that.
         """
-        xxs = XmlXPathSelector(response)
+        xxs = Selector(response)
         links = xxs.select("//item/link/text()").extract()
 
         # self.parse_item comes from ThepioneerwomanMixin

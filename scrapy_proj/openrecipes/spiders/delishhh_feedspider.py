@@ -1,22 +1,19 @@
-from scrapy.spider import BaseSpider
+from scrapy.spiders import Spider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
+from scrapy.selector import Selector
 from openrecipes.spiders.delishhh_spider import DelishhhMixin
 
 
-class DelishhhfeedSpider(BaseSpider, DelishhhMixin):
+class DelishhhfeedSpider(Spider, DelishhhMixin):
     """
     This parses the RSS feed for delishhh.com, grabs the original
     links to each entry, and scrapes just those pages. This should be used
     to keep up to date after we have backfilled the existing recipes by
     crawling the whole site
     """
+
     name = "delishhh.feed"
-    allowed_domains = [
-        "delishhh.com",
-        "feeds.feedburner.com",
-        "feedproxy.google.com"
-    ]
+    allowed_domains = ["delishhh.com", "feeds.feedburner.com", "feedproxy.google.com"]
     start_urls = [
         "http://feeds.feedburner.com/delishhh",
     ]
@@ -30,7 +27,7 @@ class DelishhhfeedSpider(BaseSpider, DelishhhMixin):
         would have to decode all the encoded characters and then build a DOM
         from that.
         """
-        xxs = XmlXPathSelector(response)
+        xxs = Selector(response)
         links = xxs.select("//item/*[local-name()='origLink']/text()").extract()
 
         # self.parse_item comes from OnehundredonecookbooksMixin

@@ -1,16 +1,14 @@
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 
 
 class TheVintageMixerMixin(object):
-
-    source = 'thevintagemixer'
+    source = "thevintagemixer"
 
     def parse_item(self, response):
-
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         base_path = '//div[@itemtype="http://schema.org/Recipe"]'
         recipes_scope = hxs.select(base_path)
@@ -26,24 +24,23 @@ class TheVintageMixerMixin(object):
 
         recipes = []
         for recipe_scope in recipes_scope:
-
             il = RecipeItemLoader(item=RecipeItem())
-            il.add_value('source', self.source)
+            il.add_value("source", self.source)
 
-            il.add_value('image', recipe_scope.select(image_path).extract())
-            il.add_value('name', recipe_scope.select(name_path).extract())
-            il.add_value('url', recipe_scope.select(url_path).extract())
+            il.add_value("image", recipe_scope.select(image_path).extract())
+            il.add_value("name", recipe_scope.select(name_path).extract())
+            il.add_value("url", recipe_scope.select(url_path).extract())
 
             ingredients = []
             ingredient_scopes = recipe_scope.select(ingredients_path)
             for ingredient_scope in ingredient_scopes:
                 ingredient = ingredient_scope.extract().strip()
-                if (ingredient):
+                if ingredient:
                     ingredients.append(ingredient)
-            il.add_value('ingredients', ingredients)
+            il.add_value("ingredients", ingredients)
 
-            il.add_value('recipeYield', recipe_scope.select(yield_path).extract())
-            il.add_value('totalTime', recipe_scope.select(total_time_path).extract())
+            il.add_value("recipeYield", recipe_scope.select(yield_path).extract())
+            il.add_value("totalTime", recipe_scope.select(total_time_path).extract())
 
             recipes.append(il.load_item())
 
@@ -51,7 +48,6 @@ class TheVintageMixerMixin(object):
 
 
 class TheVintageMixerCrawlSpider(CrawlSpider, TheVintageMixerMixin):
-
     name = "thevintagemixer.com"
 
     allowed_domains = ["thevintagemixer.com"]
@@ -61,8 +57,6 @@ class TheVintageMixerCrawlSpider(CrawlSpider, TheVintageMixerMixin):
     ]
 
     rules = (
-
-        Rule(SgmlLinkExtractor(allow=('/category/vintage-mixer/recipes/page/\d+/'))),
-
-        Rule(SgmlLinkExtractor(allow=('/\d{4}/\d{2}//[a-z-]+/')), callback='parse_item'),
+        Rule(LinkExtractor(allow=("/category/vintage-mixer/recipes/page/\d+/"))),
+        Rule(LinkExtractor(allow=("/\d{4}/\d{2}//[a-z-]+/")), callback="parse_item"),
     )

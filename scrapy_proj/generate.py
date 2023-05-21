@@ -5,9 +5,9 @@ import sys
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
-SpiderTemplate = """from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+SpiderTemplate = """from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 
 
@@ -16,7 +16,7 @@ class %(crawler_name)sMixin(object):
 
     def parse_item(self, response):
 
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         base_path = 'TODO'
 
@@ -71,20 +71,20 @@ class %(crawler_name)scrawlSpider(CrawlSpider, %(crawler_name)sMixin):
     ]
 
     rules = (
-        Rule(SgmlLinkExtractor(allow=('TODO'))),
+        Rule(LinkExtractor(allow=('TODO'))),
 
-        Rule(SgmlLinkExtractor(allow=('TODO')),
+        Rule(LinkExtractor(allow=('TODO')),
              callback='parse_item'),
     )
 """
 
-FeedSpiderTemplate = """from scrapy.spider import BaseSpider
+FeedSpiderTemplate = """from scrapy.spiders import Spider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
+from scrapy.selector import Selector
 from openrecipes.spiders.%(source)s_spider import %(crawler_name)sMixin
 
 
-class %(crawler_name)sfeedSpider(BaseSpider, %(crawler_name)sMixin):
+class %(crawler_name)sfeedSpider(Spider, %(crawler_name)sMixin):
     name = "%(name)s.feed"
     allowed_domains = [
         "%(feed_domains)s",
@@ -96,7 +96,7 @@ class %(crawler_name)sfeedSpider(BaseSpider, %(crawler_name)sMixin):
     ]
 
     def parse(self, response):
-        xxs = XmlXPathSelector(response)
+        xxs = Selector(response)
         links = xxs.select("TODO").extract()
 
         return [Request(x, callback=self.parse_item) for x in links]
@@ -104,10 +104,10 @@ class %(crawler_name)sfeedSpider(BaseSpider, %(crawler_name)sMixin):
 
 
 def parse_url(url):
-    if url.startswith('http://') or url.startswith('https://'):
+    if url.startswith("http://") or url.startswith("https://"):
         return urlparse(url)
     else:
-        return urlparse('http://' + url)
+        return urlparse("http://" + url)
 
 
 def generate_crawlers(args):
@@ -117,38 +117,46 @@ def generate_crawlers(args):
     name = args.name.lower()
 
     values = {
-        'crawler_name': name.capitalize(),
-        'source': name,
-        'name': domain,
-        'domain': domain,
-        'start_url': args.start_url,
+        "crawler_name": name.capitalize(),
+        "source": name,
+        "name": domain,
+        "domain": domain,
+        "start_url": args.start_url,
     }
 
-    spider_filename = os.path.join(script_dir, 'openrecipes', 'spiders', '%s_spider.py' % name)
-    with open(spider_filename, 'w') as f:
+    spider_filename = os.path.join(
+        script_dir, "openrecipes", "spiders", "%s_spider.py" % name
+    )
+    with open(spider_filename, "w") as f:
         f.write(SpiderTemplate % values)
 
     if args.with_feed:
         feed_url = args.with_feed[0]
         feed_domain = parse_url(feed_url).netloc
-        values['feed_url'] = feed_url
-        values['name'] = name
+        values["feed_url"] = feed_url
+        values["name"] = name
         if feed_domain == domain:
-            values['feed_domains'] = domain
+            values["feed_domains"] = domain
         else:
-            values['feed_domains'] = '%s",\n        "%s' % (domain, feed_domain)
-        feed_filename = os.path.join(script_dir, 'openrecipes', 'spiders', '%s_feedspider.py' % name)
-        with open(feed_filename, 'w') as f:
+            values["feed_domains"] = '%s",\n        "%s' % (domain, feed_domain)
+        feed_filename = os.path.join(
+            script_dir, "openrecipes", "spiders", "%s_feedspider.py" % name
+        )
+        with open(feed_filename, "w") as f:
             f.write(FeedSpiderTemplate % values)
 
 
 epilog = """
 Example usage: python generate.py epicurious http://www.epicurious.com/
 """
-parser = argparse.ArgumentParser(description='Generate a scrapy spider', epilog=epilog)
-parser.add_argument('name', help='Spider name.  This will be used to generate the filename')
-parser.add_argument('start_url', help='Start URL for crawling')
-parser.add_argument('--with-feed', required=False, nargs=1, metavar='feed-url', help='RSS Feed URL')
+parser = argparse.ArgumentParser(description="Generate a scrapy spider", epilog=epilog)
+parser.add_argument(
+    "name", help="Spider name.  This will be used to generate the filename"
+)
+parser.add_argument("start_url", help="Start URL for crawling")
+parser.add_argument(
+    "--with-feed", required=False, nargs=1, metavar="feed-url", help="RSS Feed URL"
+)
 
 if len(sys.argv) == 1:
     parser.print_help(sys.stderr)

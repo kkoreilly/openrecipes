@@ -1,15 +1,15 @@
-from scrapy.spider import BaseSpider
+from scrapy.spiders import Spider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
+from scrapy.selector import Selector
 from openrecipes.spiders.paninihappy_spider import PaninihappyMixin
 
 
-class PaninihappyfeedSpider(BaseSpider, PaninihappyMixin):
+class PaninihappyfeedSpider(Spider, PaninihappyMixin):
     name = "paninihappy.feed"
     allowed_domains = [
         "paninihappy.com",
         "feeds.feedburner.com",
-        "feedproxy.google.com"
+        "feedproxy.google.com",
     ]
     start_urls = [
         "http://feeds.feedburner.com/PaniniHappy",
@@ -24,7 +24,7 @@ class PaninihappyfeedSpider(BaseSpider, PaninihappyMixin):
         would have to decode all the encoded characters and then build a DOM
         from that.
         """
-        xxs = XmlXPathSelector(response)
+        xxs = Selector(response)
         links = xxs.select("//item/*[local-name()='origLink']/text()").extract()
         # self.parse_item comes from OnehundredonecookbooksMixin
         return [Request(x, callback=self.parse_item) for x in links]

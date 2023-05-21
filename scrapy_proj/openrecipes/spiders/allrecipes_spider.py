@@ -1,6 +1,6 @@
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 from openrecipes.util import parse_iso_date
 
@@ -18,17 +18,15 @@ class AllrecipescrawlSpider(CrawlSpider):
     rules = (
         # this rule has no callback, so these links will be followed and mined
         # for more URLs. This lets us page through the recipe archives
-        Rule(SgmlLinkExtractor(allow=('/recipes/ViewAll.aspx\?Page=\d+'))),
-
+        Rule(LinkExtractor(allow=("/recipes/ViewAll.aspx\?Page=\d+"))),
         # this rule is for recipe posts themselves. The callback argument will
         # process the HTML on the page, extract the recipe information, and
         # return a RecipeItem object
-        Rule(SgmlLinkExtractor(allow=('/recipe/.*/detail\.aspx')),
-             callback='parse_item'),
+        Rule(LinkExtractor(allow=("/recipe/.*/detail\.aspx")), callback="parse_item"),
     )
 
     def parse_item(self, response):
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         base_path = '//*[@itemtype="http://schema.org/Recipe"]'
 
@@ -48,26 +46,26 @@ class AllrecipescrawlSpider(CrawlSpider):
         recipes = []
         for r_scope in recipes_scopes:
             il = RecipeItemLoader(item=RecipeItem())
-            il.add_value('source', 'allrecipes')
-            il.add_value('name', r_scope.select(name_path).extract())
-            il.add_value('image', r_scope.select(image_path).extract())
-            il.add_value('url', r_scope.select(url_path).extract())
-            il.add_value('description', r_scope.select(description_path).extract())
+            il.add_value("source", "allrecipes")
+            il.add_value("name", r_scope.select(name_path).extract())
+            il.add_value("image", r_scope.select(image_path).extract())
+            il.add_value("url", r_scope.select(url_path).extract())
+            il.add_value("description", r_scope.select(description_path).extract())
 
             prepTime = r_scope.select(prepTime_path)
-            il.add_value('prepTime', parse_iso_date(prepTime))
+            il.add_value("prepTime", parse_iso_date(prepTime))
 
             cookTime = r_scope.select(cookTime_path)
-            il.add_value('cookTime', parse_iso_date(cookTime))
-            il.add_value('recipeYield', r_scope.select(recipeYield_path).extract())
+            il.add_value("cookTime", parse_iso_date(cookTime))
+            il.add_value("recipeYield", r_scope.select(recipeYield_path).extract())
 
             ingredient_scopes = r_scope.select(ingredients_path)
             ingredients = []
             for i_scope in ingredient_scopes:
-                components = i_scope.select('node()/text()').extract()
-                ingredients.append(' '.join(components))
+                components = i_scope.select("node()/text()").extract()
+                ingredients.append(" ".join(components))
 
-            il.add_value('ingredients', ingredients)
+            il.add_value("ingredients", ingredients)
 
             recipes.append(il.load_item())
 

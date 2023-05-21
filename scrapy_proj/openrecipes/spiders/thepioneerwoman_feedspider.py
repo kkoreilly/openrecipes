@@ -1,21 +1,22 @@
-from scrapy.spider import BaseSpider
+from scrapy.spiders import Spider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
+from scrapy.selector import Selector
 from openrecipes.spiders.thepioneerwoman_spider import ThepioneerwomanMixin
 
 
-class ThepioneerwomanfeedSpider(BaseSpider, ThepioneerwomanMixin):
+class ThepioneerwomanfeedSpider(Spider, ThepioneerwomanMixin):
     """
     This parses the RSS feed for thepioneerwoman.com, grabs the original
     links to each entry, and scrapes just those pages. This should be used
     to keep up to date after we have backfilled the existing recipes by
     crawling the whole site
     """
+
     name = "thepioneerwoman.feed"
     allowed_domains = [
         "thepioneerwoman.com",
         "feeds.feedburner.com",
-        "feedproxy.google.com"
+        "feedproxy.google.com",
     ]
     start_urls = [
         "http://feeds.feedburner.com/pwcooks",
@@ -30,8 +31,8 @@ class ThepioneerwomanfeedSpider(BaseSpider, ThepioneerwomanMixin):
         would have to decode all the encoded characters and then build a DOM
         from that.
         """
-        xxs = XmlXPathSelector(response)
-        links = xxs.select("//item/*[local-name()='origLink']/text()").extract()
+        xxs = Selector(response)
+        links = response.xpath("//item/*[local-name()='origLink']/text()").extract()
 
         # self.parse_item comes from ThepioneerwomanMixin
         return [Request(x, callback=self.parse_item) for x in links]

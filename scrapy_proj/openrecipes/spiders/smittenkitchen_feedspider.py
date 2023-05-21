@@ -1,10 +1,10 @@
-from scrapy.spider import BaseSpider
+from scrapy.spiders import Spider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
+from scrapy.selector import Selector
 from openrecipes.spiders.smittenkitchen_spider import SmittenkitchenMixin
 
 
-class SmittenkitchenfeedSpider(BaseSpider, SmittenkitchenMixin):
+class SmittenkitchenfeedSpider(Spider, SmittenkitchenMixin):
     name = "smittenkitchen.feed"
     allowed_domains = [
         "smittenkitchen.com",
@@ -16,7 +16,7 @@ class SmittenkitchenfeedSpider(BaseSpider, SmittenkitchenMixin):
     ]
 
     def parse(self, response):
-        xxs = XmlXPathSelector(response)
+        xxs = Selector(response)
         links = xxs.select("TODO").extract()
 
         return [Request(x, callback=self.parse_item) for x in links]

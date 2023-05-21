@@ -1,24 +1,22 @@
-from scrapy.spider import BaseSpider
+from scrapy.spiders import Spider
 from scrapy.http import Request
-from scrapy.selector import XmlXPathSelector
+from scrapy.selector import Selector
 from openrecipes.spiders.cookincanuck_spider import CookincanuckMixin
 
 
-class CookincanuckfeedSpider(BaseSpider, CookincanuckMixin):
-
+class CookincanuckfeedSpider(Spider, CookincanuckMixin):
     name = "cookincanuck.feed"
     allowed_domains = [
         "cookincanuck.com",
         "feeds.feedburner.com",
-        "feedproxy.google.com"
+        "feedproxy.google.com",
     ]
     start_urls = [
         "http://feeds.feedburner.com/blogspot/hIdj",
     ]
 
     def parse(self, response):
-
-        xxs = XmlXPathSelector(response)
+        xxs = Selector(response)
         links = xxs.select("//item/*[local-name()='origLink']/text()").extract()
 
         return [Request(x, callback=self.parse_item) for x in links]

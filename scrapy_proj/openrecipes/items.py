@@ -1,15 +1,14 @@
-from scrapy.contrib.loader import ItemLoader
-from scrapy.contrib.loader.processor import Compose, MapCompose, TakeFirst, Join
+from scrapy.loader import ItemLoader
+from itemloaders.processors import Compose, MapCompose, TakeFirst, Join
 from scrapy.item import Item, Field
 from openrecipes.util import strip_html, trim_whitespace, get_isodate, get_isoduration
 
 
 def filter_ingredients(x):
-    return None if 'ingredient' in x.lower() else x
+    return None if "ingredient" in x.lower() else x
 
 
 class RecipeItemLoader(ItemLoader):
-
     source_out = TakeFirst()
 
     description_out = Compose(TakeFirst(), strip_html, trim_whitespace)
@@ -25,7 +24,9 @@ class RecipeItemLoader(ItemLoader):
 
     cookingMethod_out = Compose(TakeFirst(), trim_whitespace)
     cookTime_out = Compose(TakeFirst(), strip_html, get_isoduration)
-    ingredients_out = Compose(MapCompose(strip_html, trim_whitespace, filter_ingredients), Join("\n"))
+    ingredients_out = Compose(
+        MapCompose(strip_html, trim_whitespace, filter_ingredients), Join("\n")
+    )
     prepTime_out = Compose(TakeFirst(), strip_html, get_isoduration)
     recipeCategory_out = Compose(TakeFirst(), trim_whitespace)
     recipeCuisine_out = Compose(TakeFirst(), trim_whitespace)
@@ -88,7 +89,7 @@ class RecipeItem(Item):
     cookingMethod = Field()
     cookTime = Field()  # ISO 8601 Duration
     ingredients = Field()  # Text; separate with newlines ("\n")
-    prepTime = Field()    # ISO 8601 Duration
+    prepTime = Field()  # ISO 8601 Duration
     recipeCategory = Field()
     recipeCuisine = Field()
     recipeInstructions = Field()  # we don't currently populate this

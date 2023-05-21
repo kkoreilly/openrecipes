@@ -1,15 +1,14 @@
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 
 
 class ThelittlekitchenMixin(object):
-    source = 'thelittlekitchen'
+    source = "thelittlekitchen"
 
     def parse_item(self, response):
-
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         base_path = '//div[@class="innerrecipe"]'
 
@@ -29,26 +28,26 @@ class ThelittlekitchenMixin(object):
         for r_scope in recipes_scopes:
             il = RecipeItemLoader(item=RecipeItem())
 
-            il.add_value('source', self.source)
+            il.add_value("source", self.source)
 
-            il.add_value('name', r_scope.select(name_path).extract())
-            il.add_value('image', r_scope.select(image_path).extract())
-            il.add_value('url', response.url)
+            il.add_value("name", r_scope.select(name_path).extract())
+            il.add_value("image", r_scope.select(image_path).extract())
+            il.add_value("url", response.url)
 
-            il.add_value('prepTime', r_scope.select(prepTime_path).extract())
-            il.add_value('cookTime', r_scope.select(cookTime_path).extract())
-            il.add_value('totalTime', r_scope.select(totalTime_path).extract())
-            il.add_value('recipeYield', r_scope.select(recipeYield_path).extract())
+            il.add_value("prepTime", r_scope.select(prepTime_path).extract())
+            il.add_value("cookTime", r_scope.select(cookTime_path).extract())
+            il.add_value("totalTime", r_scope.select(totalTime_path).extract())
+            il.add_value("recipeYield", r_scope.select(recipeYield_path).extract())
 
             ingredient_scopes = r_scope.select(ingredients_path)
             ingredients = []
             for i_scope in ingredient_scopes:
-                ingredient = i_scope.select('text()').extract()
+                ingredient = i_scope.select("text()").extract()
                 ingredient = "".join(ingredient)
                 ingredients.append(ingredient)
-            il.add_value('ingredients', ingredients)
+            il.add_value("ingredients", ingredients)
 
-            il.add_value('datePublished', r_scope.select(datePublished).extract())
+            il.add_value("datePublished", r_scope.select(datePublished).extract())
 
             recipes.append(il.load_item())
 
@@ -56,7 +55,6 @@ class ThelittlekitchenMixin(object):
 
 
 class ThelittlekitchencrawlSpider(CrawlSpider, ThelittlekitchenMixin):
-
     name = "thelittlekitchen.net"
 
     allowed_domains = ["www.thelittlekitchen.net"]
@@ -67,10 +65,6 @@ class ThelittlekitchencrawlSpider(CrawlSpider, ThelittlekitchenMixin):
 
     rules = (
         # The start url directly links to all of the recipes on the site
-        #Rule(SgmlLinkExtractor(allow=(''))),
-
-        Rule(SgmlLinkExtractor(allow=('/\d{4}/\d{2}/\d{2}/.+')),
-             callback='parse_item'),
+        # Rule(LinkExtractor(allow=(''))),
+        Rule(LinkExtractor(allow=("/\d{4}/\d{2}/\d{2}/.+")), callback="parse_item"),
     )
-
-

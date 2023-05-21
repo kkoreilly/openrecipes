@@ -1,7 +1,7 @@
-from urlparse import urljoin
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from urllib.parse import urljoin
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 
 
@@ -13,18 +13,17 @@ class JamieoliverMixin(object):
 
     # this is the source string we'll store in the DB to aggregate stuff
     # from a single source
-    source = 'jamieoliver'
+    source = "jamieoliver"
 
     def parse_item(self, response):
-
         # we use this to run XPath commands against the HTML in the response
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         # this is the base XPath string for the element that contains the recipe
         # info
         base_path = """//span[@class="hrecipe"]"""
 
-        # the select() method will return a list of HtmlXPathSelector objects.
+        # the select() method will return a list of Selector objects.
         # On this site we will almost certainly either get back just one, if
         # any exist on the page
         recipes_scopes = hxs.select(base_path)
@@ -33,7 +32,9 @@ class JamieoliverMixin(object):
         name_path = '//div[@class="content"]/header/h1[@class="fn"]/text()'
         description_path = '//article[@class="recipe_description"]//text()'
         image_path = '//div[@class="recipe_image_main"]/p/img/@src'
-        recipeYield_path = '//div[@class="recipe_meta"]/p/span[contains(@class,"yield")]/text()'
+        recipeYield_path = (
+            '//div[@class="recipe_meta"]/p/span[contains(@class,"yield")]/text()'
+        )
         ingredients_path = '//article[@class="ingredients"]//ul//li/p[@class="ingredient"]/span[@class="value"]/text()'
 
         # init an empty list
@@ -44,22 +45,25 @@ class JamieoliverMixin(object):
             # make an empty RecipeItem
             il = RecipeItemLoader(item=RecipeItem())
 
-            il.add_value('source', self.source)
+            il.add_value("source", self.source)
 
-            il.add_value('name', r_scope.select(name_path).extract())
-            il.add_value('image', urljoin(response.url, r_scope.select(image_path).extract().pop(0)))
-            il.add_value('url', response.url)
-            il.add_value('description', r_scope.select(description_path).extract())
+            il.add_value("name", r_scope.select(name_path).extract())
+            il.add_value(
+                "image",
+                urljoin(response.url, r_scope.select(image_path).extract().pop(0)),
+            )
+            il.add_value("url", response.url)
+            il.add_value("description", r_scope.select(description_path).extract())
 
             # prepTime not available
-            il.add_value('prepTime', None)
+            il.add_value("prepTime", None)
             # cookTime not available
-            il.add_value('cookTime', None)
-            il.add_value('recipeYield', r_scope.select(recipeYield_path).extract())
-            il.add_value('ingredients', r_scope.select(ingredients_path).extract())
+            il.add_value("cookTime", None)
+            il.add_value("recipeYield", r_scope.select(recipeYield_path).extract())
+            il.add_value("ingredients", r_scope.select(ingredients_path).extract())
 
             # datePublished not available
-            il.add_value('datePublished', None)
+            il.add_value("datePublished", None)
 
             # stick this RecipeItem in the array of recipes we will return
             recipes.append(il.load_item())
@@ -70,7 +74,6 @@ class JamieoliverMixin(object):
 
 
 class JamieolivercrawlSpider(CrawlSpider, JamieoliverMixin):
-
     # this is the name you'll use to run this spider from the CLI
     name = "jamieoliver.com"
 
@@ -91,18 +94,15 @@ class JamieolivercrawlSpider(CrawlSpider, JamieoliverMixin):
         #     /recipes/{section}
         #     /recipes/category/{category}
         #     /recipes/category/{category}/{sub-category}
-
         # this rule has no callback, so these links will be followed and mined
         # for more URLs. This lets us page through the recipe archives
-        Rule(SgmlLinkExtractor(allow=(
-            '/recipes/category/.*'
-        ), deny=(
-            '/recipes/search.+',
-        ))),
-
+        Rule(
+            LinkExtractor(allow=("/recipes/category/.*"), deny=("/recipes/search.+",))
+        ),
         # this rule is for recipe posts themselves. The callback argument will
         # process the HTML on the page, extract the recipe information, and
         # return a RecipeItem object
-        Rule(SgmlLinkExtractor(allow=('/recipes\/[^\/]+\-recipes/.+')),
-             callback='parse_item'),
+        Rule(
+            LinkExtractor(allow=("/recipes\/[^\/]+\-recipes/.+")), callback="parse_item"
+        ),
     )

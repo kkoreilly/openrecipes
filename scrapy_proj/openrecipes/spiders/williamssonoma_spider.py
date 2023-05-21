@@ -1,15 +1,14 @@
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 
 
 class WilliamsSonomaMixin(object):
-    source = 'williamssonoma'
+    source = "williamssonoma"
 
     def parse_item(self, response):
-
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         base_path = """//*[contains(concat(' ', normalize-space(@class), ' '),
                         ' hrecipe ')]"""
@@ -26,20 +25,19 @@ class WilliamsSonomaMixin(object):
         for r_scope in recipes_scopes:
             il = RecipeItemLoader(item=RecipeItem())
 
-            il.add_value('source', self.source)
+            il.add_value("source", self.source)
 
-            il.add_value('name', r_scope.select(name_path).extract())
-            il.add_value('image', r_scope.select(image_path).extract())
-            il.add_value('url', response.url)
-            il.add_value('description',
-                         r_scope.select(description_path).extract())
+            il.add_value("name", r_scope.select(name_path).extract())
+            il.add_value("image", r_scope.select(image_path).extract())
+            il.add_value("url", response.url)
+            il.add_value("description", r_scope.select(description_path).extract())
 
             # yield given somewhere in description 'Serves n.'
-            il.add_value('recipeYield',
-                         r_scope.select(recipeYield_path).re('Serves \d\.'))
+            il.add_value(
+                "recipeYield", r_scope.select(recipeYield_path).re("Serves \d\.")
+            )
 
-            il.add_value('ingredients',
-                         r_scope.select(ingredients_path).extract())
+            il.add_value("ingredients", r_scope.select(ingredients_path).extract())
 
             recipes.append(il.load_item())
 
@@ -47,7 +45,6 @@ class WilliamsSonomaMixin(object):
 
 
 class WilliamsSonomacrawlSpider(CrawlSpider, WilliamsSonomaMixin):
-
     name = "williams-sonoma.com"
 
     allowed_domains = ["www.williams-sonoma.com"]
@@ -57,7 +54,6 @@ class WilliamsSonomacrawlSpider(CrawlSpider, WilliamsSonomaMixin):
     ]
 
     rules = (
-        Rule(SgmlLinkExtractor(allow=('/recipe/[\w\-]+\.html')),
-             callback='parse_item'),
-        Rule(SgmlLinkExtractor(allow=('/recipe/.+'))),
+        Rule(LinkExtractor(allow=("/recipe/[\w\-]+\.html")), callback="parse_item"),
+        Rule(LinkExtractor(allow=("/recipe/.+"))),
     )

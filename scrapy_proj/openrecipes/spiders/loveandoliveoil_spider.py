@@ -1,15 +1,14 @@
-from scrapy.contrib.spiders import CrawlSpider, Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from scrapy.selector import HtmlXPathSelector
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
 
 
 class Loveandoliveoil_Mixin(object):
-    source = 'loveandoliveoil'
+    source = "loveandoliveoil"
 
     def parse_item(self, response):
-
-        hxs = HtmlXPathSelector(response)
+        hxs = Selector(response)
 
         base_path = '//blockquote[@class="recipe hrecipe"]'
 
@@ -28,21 +27,18 @@ class Loveandoliveoil_Mixin(object):
         for r_scope in recipes_scopes:
             il = RecipeItemLoader(item=RecipeItem())
 
-            il.add_value('source', self.source)
+            il.add_value("source", self.source)
 
-            il.add_value('name', r_scope.select(name_path).extract())
-            il.add_value('image', r_scope.select(image_path).extract())
-            il.add_value('url', response.url)
-            il.add_value('description',
-                         r_scope.select(description_path).extract())
+            il.add_value("name", r_scope.select(name_path).extract())
+            il.add_value("image", r_scope.select(image_path).extract())
+            il.add_value("url", response.url)
+            il.add_value("description", r_scope.select(description_path).extract())
 
-            il.add_value('prepTime', r_scope.select(prepTime_path).extract())
-            il.add_value('cookTime', r_scope.select(cookTime_path).extract())
-            il.add_value('recipeYield',
-                         r_scope.select(recipeYield_path).extract())
+            il.add_value("prepTime", r_scope.select(prepTime_path).extract())
+            il.add_value("cookTime", r_scope.select(cookTime_path).extract())
+            il.add_value("recipeYield", r_scope.select(recipeYield_path).extract())
 
-            il.add_value('ingredients',
-                         r_scope.select(ingredients_path).extract())
+            il.add_value("ingredients", r_scope.select(ingredients_path).extract())
 
             recipes.append(il.load_item())
 
@@ -50,16 +46,15 @@ class Loveandoliveoil_Mixin(object):
 
 
 class Loveandoliveoil_crawlSpider(CrawlSpider, Loveandoliveoil_Mixin):
-
     name = "loveandoliveoil.com"
 
     allowed_domains = ["www.loveandoliveoil.com"]
 
-    start_urls = ["http://www.loveandoliveoil.com/recipe-index", ]
+    start_urls = [
+        "http://www.loveandoliveoil.com/recipe-index",
+    ]
 
     rules = (
-        Rule(SgmlLinkExtractor(allow=('/tag/.+'))),
-
-        Rule(SgmlLinkExtractor(allow=('/\d{4}/\d{2}/.+\.html')),
-             callback='parse_item'),
+        Rule(LinkExtractor(allow=("/tag/.+"))),
+        Rule(LinkExtractor(allow=("/\d{4}/\d{2}/.+\.html")), callback="parse_item"),
     )
