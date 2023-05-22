@@ -2,7 +2,6 @@ from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from scrapy.selector import Selector
 from openrecipes.items import RecipeItem, RecipeItemLoader
-import logging
 
 
 class BBCfoodMixin(object):
@@ -11,16 +10,6 @@ class BBCfoodMixin(object):
     source = "bbcfood"
 
     def parse_item(self, response):
-        # hxs =.xpathor(response)
-
-        self.logger.debug("Parse Item")
-
-        base_path = """//div[@class="recipe-main-info"]"""
-
-        recipes_scopes = response.xpath(base_path).getall()
-
-        self.logger.debug("Recipe scopes: %s", recipes_scopes)
-
         name_path = "//h1/text()"
         description_path = '//p[@class="recipe-description__text"]/text()'
         image_path = '//div[@class="recipe-media"]//div//img/@src'
@@ -34,24 +23,23 @@ class BBCfoodMixin(object):
         il = RecipeItemLoader(item=RecipeItem())
         il.add_value("source", self.source)
         il.add_value("url", response.url)
-        il.add_value("name", response.xpath(name_path).extract())
-        il.add_value("description", response.xpath(description_path).extract())
-        il.add_value("image", response.xpath(image_path).extract())
+        il.add_value("name", response.xpath(name_path).get())
+        il.add_value("description", response.xpath(description_path).get())
+        il.add_value("image", response.xpath(image_path).get())
 
-        il.add_value("prepTime", response.xpath(prepTime_path).extract())
-        il.add_value("cookTime", response.xpath(cookTime_path).extract())
-        il.add_value("recipeYield", response.xpath(recipeYield_path).extract())
+        il.add_value("prepTime", response.xpath(prepTime_path).get())
+        il.add_value("cookTime", response.xpath(cookTime_path).get())
+        il.add_value("recipeYield", response.xpath(recipeYield_path).get())
 
         ingredient_scopes = response.xpath(ingredients_path)
         ingredients = []
         for i_scope in ingredient_scopes:
-            amount = i_scope.xpath("text()[1]").extract()
-            name = i_scope.xpath("a/text()").extract()
+            amount = i_scope.xpath("text()[1]").getall()
+            name = i_scope.xpath("a/text()").getall()
             amount = "".join(amount).strip()
             name = "".join(name).strip()
             ingredients.append("%s %s" % (amount, name))
         il.add_value("ingredients", ingredients)
-        # il.add_value("ingredients", str(",".join(ingredients).encode("utf-8")))
         recipes.append(il.load_item())
 
         # for r_scope in recipes_scopes:

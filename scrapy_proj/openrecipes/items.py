@@ -16,6 +16,9 @@ class RecipeItemLoader(ItemLoader):
     name_out = Compose(TakeFirst(), strip_html, trim_whitespace)
     url_out = Compose(TakeFirst(), strip_html, trim_whitespace)
 
+    ratingValue_out = Compose(TakeFirst(), strip_html, trim_whitespace)
+    ratingCount_out = Compose(TakeFirst(), strip_html, trim_whitespace)
+
     creator_out = Compose(TakeFirst(), trim_whitespace)
     dateCreated_out = Compose(TakeFirst(), strip_html, get_isodate)
     dateModified_out = Compose(TakeFirst(), strip_html, get_isodate)
@@ -45,6 +48,11 @@ class RecipeItemLoader(ItemLoader):
     sugarContent_out = Compose(TakeFirst(), trim_whitespace)
     transFatContent_out = Compose(TakeFirst(), trim_whitespace)
     unsaturatedFatContent_out = Compose(TakeFirst(), trim_whitespace)
+
+    vitaminCContent_out = Compose(TakeFirst(), trim_whitespace)
+    calciumContent_out = Compose(TakeFirst(), trim_whitespace)
+    ironContent_out = Compose(TakeFirst(), trim_whitespace)
+    potassiumContent_out = Compose(TakeFirst(), trim_whitespace)
 
 
 class RecipeItem(Item):
@@ -78,6 +86,9 @@ class RecipeItem(Item):
     name = Field()
     url = Field()  # URL
 
+    ratingValue = Field()
+    ratingCount = Field()
+
     # CreativeWork
     creator = Field()  # Organization or Person -- not sure yet how to handle
     dateCreated = Field()  # ISO 8601 Date -- the orig item, not our copy
@@ -109,3 +120,8 @@ class RecipeItem(Item):
     sugarContent = Field()  # Mass
     transFatContent = Field()  # Mass
     unsaturatedFatContent = Field()  # Mass
+
+    vitaminCContent = Field()  # Mass
+    calciumContent = Field()  # Mass
+    ironContent = Field()  # Mass
+    potassiumContent = Field()  # Mass

@@ -12,6 +12,15 @@ def parse_iso_date(scope):
         return ""
 
 
+def parse_time(str):
+    if str == None:
+        return ""
+    # str = "PT" + str.replace("day", "D").replace("hrs", "H").replace(
+    #     "mins", "M"
+    # ).replace(" ", "")
+    return str.replace("hrs", "hours").replace("mins", "minutes")
+
+
 def flatten(list_or_string):
     if not list_or_string:
         return ""
@@ -42,12 +51,12 @@ def get_isodate(date_str):
     try:
         isodate.parse_date(date_str)
         return date_str
-    except (isodate.ISO8601Error, e):
+    except isodate.ISO8601Error:
         # if not, try to parse it
         try:
             iso_date = isodate.date_isoformat(timelib.strtodatetime(date_str))
-        except (Exception, e):
-            logging.msg(e.message, level=logging.WARNING)
+        except Exception as e:
+            logging.warn(e.message)
             return None
 
         return iso_date
@@ -64,13 +73,13 @@ def get_isoduration(date_str):
     try:
         isodate.parse_duration(date_str)
         return date_str
-    except (isodate.ISO8601Error, e):
+    except isodate.ISO8601Error:
         # if not, try to parse it
         try:
             delta = timelib.strtodatetime(date_str) - timelib.strtodatetime("now")
             iso_duration = isodate.duration_isoformat(delta)
-        except (Exception, e):
-            logging.msg(e.message, level=logging.WARNING)
+        except Exception as e:
+            logging.warn(e.message)
             return None
 
         return iso_duration
@@ -82,8 +91,8 @@ def parse_isodate(iso_date):
 
     try:
         date = isodate.parse_date(iso_date)
-    except (Exception, e):
-        logging.msg(e.message, level=logging.WARNING)
+    except Exception as e:
+        logging.warn(e.message)
 
     return date
 
@@ -94,8 +103,8 @@ def parse_isoduration(iso_duration):
 
     try:
         delta = isodate.parse_duration(iso_duration)
-    except (Exception, e):
-        logging.msg(e.message, level=logging.WARNING)
+    except Exception as e:
+        logging.warn(e.message)
 
     return delta
 

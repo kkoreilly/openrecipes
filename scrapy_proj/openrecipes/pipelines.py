@@ -45,8 +45,6 @@ class DuplicaterecipePipeline(object):
             "utf-8"
         )
 
-        logging.debug("Base: %s", base)
-
         # generate an ID based on that string
         hash_id = hashlib.md5(base).hexdigest()
 
@@ -120,7 +118,7 @@ class MakestringsPipeline(object):
 
     def process_item(self, item, spider):
         deprecated_msg = "MakestringsPipeline is deprecated. You may need to update your settings.py to the current pipeline config. See settings.py.default for example"
-        logging.msg(deprecated_msg, level=logging.WARNING, spider=spider)
+        logging.warn(deprecated_msg, spider=spider)
         return item
 
 
@@ -129,5 +127,5 @@ class CleanDatesTimesPipeline(object):
 
     def process_item(self, item, spider):
         deprecated_msg = "CleanDatesTimesPipeline is deprecated. You may need to update your settings.py to the current pipeline config. See settings.py.default for example"
-        logging.msg(deprecated_msg, level=logging.WARNING, spider=spider)
+        logging.warn(deprecated_msg, spider=spider)
         return item
