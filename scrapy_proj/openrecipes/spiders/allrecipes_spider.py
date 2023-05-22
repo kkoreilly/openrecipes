@@ -67,16 +67,16 @@ class AllrecipescrawlSpider(CrawlSpider):
 
         il = RecipeItemLoader(item=RecipeItem())
         il.add_value("source", "allrecipes")
-        il.add_value("name", data["name"])
-        image = data["image"]
+        il.add_value("name", data.get("name"))
+        image = data.get("image")
         if image != None:
-            il.add_value("image", image["url"])
+            il.add_value("image", image.get("url"))
         il.add_value("url", response.url)
-        il.add_value("description", data["description"])
-        rating = data["aggregateRating"]
+        il.add_value("description", data.get("description"))
+        rating = data.get("aggregateRating")
         if rating != None:
-            il.add_value("ratingValue", rating["ratingValue"])
-            il.add_value("ratingCount", rating["ratingCount"])
+            il.add_value("ratingValue", rating.get("ratingValue"))
+            il.add_value("ratingCount", rating.get("ratingCount"))
         # rating_str = response.css(rating_path).get()
         # if rating_str != None:
         #     il.add_value("rating", rating_str[1:])  # need to get rid of space at start
@@ -86,28 +86,32 @@ class AllrecipescrawlSpider(CrawlSpider):
         #         "datePublished",
         #         date_str.replace("Updated on ", "").replace("Published on ", ""),
         #     )
-        il.add_value("datePublished", data["datePublished"])
-        il.add_value("dateModified", data["dateModified"])
-        il.add_value("creator", data["author"][0]["name"])
-        il.add_value("prepTime", data["prepTime"])
-        il.add_value("cookTime", data["cookTime"])
-        il.add_value("totalTime", data["totalTime"])
-        il.add_value("recipeYield", data["recipeYield"])
-        il.add_value("recipeCategory", data["recipeCategory"])
-        il.add_value("recipeCuisine", data["recipeCuisine"])
+        il.add_value("datePublished", data.get("datePublished"))
+        il.add_value("dateModified", data.get("dateModified"))
+        author = data.get("author")
+        if author != None:
+            il.add_value("creator", author[0].get("name"))
+        il.add_value("prepTime", data.get("prepTime"))
+        il.add_value("cookTime", data.get("cookTime"))
+        il.add_value("totalTime", data.get("totalTime"))
+        il.add_value("recipeYield", data.get("recipeYield"))
+        il.add_value("recipeCategory", data.get("recipeCategory"))
+        il.add_value("recipeCuisine", data.get("recipeCuisine"))
 
-        il.add_value("calories", data["nutrition"]["calories"])
-        il.add_value("carbohydrateContent", data["nutrition"]["carbohydrateContent"])
-        il.add_value("cholesterolContent", data["nutrition"]["cholesterolContent"])
-        il.add_value("fatContent", data["nutrition"]["fatContent"])
-        il.add_value("fiberContent", data["nutrition"]["fiberContent"])
-        il.add_value("proteinContent", data["nutrition"]["proteinContent"])
-        il.add_value("saturatedFatContent", data["nutrition"]["saturatedFatContent"])
-        il.add_value(
-            "unsaturatedFatContent", data["nutrition"]["unsaturatedFatContent"]
-        )
-        il.add_value("sodiumContent", data["nutrition"]["sodiumContent"])
-        il.add_value("sugarContent", data["nutrition"]["sugarContent"])
+        nutrition = data.get("nutrition")
+        if nutrition != None:
+            il.add_value("calories", nutrition.get("calories"))
+            il.add_value("carbohydrateContent", nutrition.get("carbohydrateContent"))
+            il.add_value("cholesterolContent", nutrition.get("cholesterolContent"))
+            il.add_value("fatContent", nutrition.get("fatContent"))
+            il.add_value("fiberContent", nutrition.get("fiberContent"))
+            il.add_value("proteinContent", nutrition.get("proteinContent"))
+            il.add_value("saturatedFatContent", nutrition.get("saturatedFatContent"))
+            il.add_value(
+                "unsaturatedFatContent", nutrition.get("unsaturatedFatContent")
+            )
+            il.add_value("sodiumContent", nutrition.get("sodiumContent"))
+            il.add_value("sugarContent", nutrition.get("sugarContent"))
 
         il.add_value("vitaminCContent", response.xpath(vitaminC_path).get())
         il.add_value("calciumContent", response.xpath(calcium_path).get())
@@ -120,7 +124,7 @@ class AllrecipescrawlSpider(CrawlSpider):
         #     components = i_scope.xpath("span/text()").getall()
         #     ingredients.append(" ".join(components))
 
-        il.add_value("ingredients", data["recipeIngredient"])
+        il.add_value("ingredients", data.get("recipeIngredient"))
 
         recipes.append(il.load_item())
 
